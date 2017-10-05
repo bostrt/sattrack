@@ -65,15 +65,29 @@ void loop() {
 
 	// Create orbit object
 	predict_orbital_elements_t *iss = predict_parse_tle(tle_line_1, tle_line_2);
+  if (DEBUG) {
+    Serial.println("predict_parse_tle()...");
+  }
 
 	// Create observer object
 	predict_observer_t *obs = predict_create_observer(QTH_CALLSIGN, TO_RADIANS(QTH_LATITUDE), TO_RADIANS(QTH_LONGITUDE), QTH_ELEVATION);
+  if (DEBUG) {
+    Serial.println("predict_create_observer()...");
+  }
 
   predict_julian_date_t curr_time = predict_to_julian(rtc.now().unixtime());
+  if (DEBUG) {
+    Serial.println("predict_to_julian()...");
+  }
+
 
 	// Predict ISS
 	struct predict_orbit iss_orbit;
 	predict_orbit(iss, &iss_orbit, curr_time);
+  if (DEBUG) {
+    Serial.println("predict_orbit()...");
+  }
+
   char lat[50];
   char lon[50];
   char alt[50];
@@ -93,6 +107,9 @@ void loop() {
   dtostrf(TO_DEGREES(iss_obs.elevation), 3, 6, ele);
   sprintf(outbuff, "ISS: azi=%s, ele=%s\n", azi, ele);
   Serial.write(outbuff);
+
+  predict_destroy_orbital_elements(iss);
+  predict_destroy_observer(obs);
 }
 
 void serialEventRun() {
