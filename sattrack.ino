@@ -26,6 +26,9 @@ static double QTH_LATITUDE = 35.751489; // In degrees
 static double QTH_LONGITUDE = -78.775148; // In degrees
 static double QTH_ELEVATION = 152; // In meters
 
+static predict_orbital_elements_t *iss;
+static predict_observer_t *obs;
+
 #define I2C_ADDRESS 0x78
 
 RTC_PCF8523 rtc;
@@ -51,6 +54,21 @@ void setup() {
   delay(2000);
   display.clearDisplay();
   display.drawPixel(10, 10, WHITE);
+
+  const char *tle_line_1 = "1 25544U 98067A   17273.88039200  .00006192  00000-0  10105-3 0  9998";
+	const char *tle_line_2 = "2 25544  51.6421 231.4274 0004085 329.1875  58.5254 15.54032580 78193";
+
+	// Create orbit object
+  iss = predict_parse_tle(tle_line_1, tle_line_2);
+  if (DEBUG) {
+    Serial.println("predict_parse_tle()...");
+  }
+
+	// Create observer object
+	obs = predict_create_observer(QTH_CALLSIGN, TO_RADIANS(QTH_LATITUDE), TO_RADIANS(QTH_LONGITUDE), QTH_ELEVATION);
+  if (DEBUG) {
+    Serial.println("predict_create_observer()...");
+  }
 }
 
 void loop() {
@@ -58,21 +76,6 @@ void loop() {
   delay(1000);
   if (DEBUG) {
     Serial.print("loop()...\n");
-  }
-
-  const char *tle_line_1 = "1 25544U 98067A   17273.88039200  .00006192  00000-0  10105-3 0  9998";
-	const char *tle_line_2 = "2 25544  51.6421 231.4274 0004085 329.1875  58.5254 15.54032580 78193";
-
-	// Create orbit object
-	predict_orbital_elements_t *iss = predict_parse_tle(tle_line_1, tle_line_2);
-  if (DEBUG) {
-    Serial.println("predict_parse_tle()...");
-  }
-
-	// Create observer object
-	predict_observer_t *obs = predict_create_observer(QTH_CALLSIGN, TO_RADIANS(QTH_LATITUDE), TO_RADIANS(QTH_LONGITUDE), QTH_ELEVATION);
-  if (DEBUG) {
-    Serial.println("predict_create_observer()...");
   }
 
   predict_julian_date_t curr_time = predict_to_julian(rtc.now().unixtime());
@@ -108,8 +111,6 @@ void loop() {
   sprintf(outbuff, "ISS: azi=%s, ele=%s\n", azi, ele);
   Serial.write(outbuff);
 
-  predict_destroy_orbital_elements(iss);
-  predict_destroy_observer(obs);
 }
 
 void serialEventRun() {
