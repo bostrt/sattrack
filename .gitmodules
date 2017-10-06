@@ -1,0 +1,3 @@
+[submodule "lib/libpredict-arduino-lib"]
+	path = lib/libpredict-arduino-lib
+	url = git@github.com:bostrt/libpredict-arduino-lib.git
