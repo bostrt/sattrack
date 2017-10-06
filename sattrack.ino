@@ -2,6 +2,7 @@
 #include <RTClib.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <Adafruit_FRAM_I2C.h>
 
 #include <sgp4.h>
 #include <math.h>
@@ -11,6 +12,8 @@
 #include <time.h>
 #include <sys/time.h>
 
+#include "config.h"
+
 #if defined(ARDUINO_SAMD_ZERO) && defined(SERIAL_PORT_USBVIRTUAL)
   // Required for Serial on Zero based boards
   #define Serial SERIAL_PORT_USBVIRTUAL
@@ -19,12 +22,7 @@
 #define TO_RADIANS(degrees) (degrees * (M_PI / 180.0))
 #define TO_DEGREES(radians) (radians * (180.0 / M_PI))
 
-/* Application Configurations */
 #define DEBUG 1
-static char *QTH_CALLSIGN = "KN4CUV"; // Optional
-static double QTH_LATITUDE = 35.751489; // In degrees
-static double QTH_LONGITUDE = -78.775148; // In degrees
-static double QTH_ELEVATION = 152; // In meters
 
 static predict_orbital_elements_t *iss;
 static predict_observer_t *obs;
@@ -32,7 +30,9 @@ static predict_observer_t *obs;
 #define I2C_ADDRESS 0x78
 
 RTC_PCF8523 rtc;
+Adafruit_FRAM_I2C fram = Adafruit_FRAM_I2C();
 Adafruit_SSD1306 display(-1);
+QTH qth;
 
 void setup() {
   if (DEBUG) {
@@ -48,6 +48,22 @@ void setup() {
     Serial.println("RTC is NOT running!");
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
+  if (fram.begin()) {
+    Serial.println("FRAM I2C Found!");
+  }
+
+  bool valid = verify(&fram);
+  if (valid) {
+    Serial.println("FRAM Check passed and storage valid. Reading QTH state...");
+    load(&qth, &fram);
+    char buffer[50];
+    sprintf(buffer, "Hello %s, [lat: %3.6f, long: %3.6f, elev: %3.6f]", qth.callsign, qth.latitude, qth.longitude, qth.elevation);
+    Serial.println(buffer);
+  } else {
+    Serial.println("FRAM Check passed and storage invalid. Using default QTH.");
+    save(&qth, &fram);
+  }
+
 
   display.begin(SSD1306_SWITCHCAPVCC, I2C_ADDRESS, false);
   display.display();
@@ -55,8 +71,8 @@ void setup() {
   display.clearDisplay();
   display.drawPixel(10, 10, WHITE);
 
-  const char *tle_line_1 = "1 25544U 98067A   17273.88039200  .00006192  00000-0  10105-3 0  9998";
-	const char *tle_line_2 = "2 25544  51.6421 231.4274 0004085 329.1875  58.5254 15.54032580 78193";
+  const char *tle_line_1 = "1 27607U 02058C   17277.94906682 +.00000114 +00000-0 +37005-4 0  9990";
+	const char *tle_line_2 = "2 27607 064.5549 150.1407 0034654 042.8809 317.4986 14.75371499795175";
 
 	// Create orbit object
   iss = predict_parse_tle(tle_line_1, tle_line_2);
@@ -65,7 +81,7 @@ void setup() {
   }
 
 	// Create observer object
-	obs = predict_create_observer(QTH_CALLSIGN, TO_RADIANS(QTH_LATITUDE), TO_RADIANS(QTH_LONGITUDE), QTH_ELEVATION);
+	obs = predict_create_observer(qth.callsign, TO_RADIANS(qth.latitude), TO_RADIANS(qth.longitude), qth.elevation);
   if (DEBUG) {
     Serial.println("predict_create_observer()...");
   }
@@ -234,11 +250,18 @@ void swallowIncoming() {
 bool configureCallsign() {
   Serial.println("Enter your callsign...");
   Serial.print(">>> ");
-  char *input;
-  int success = Serial.readBytesUntil('\n', input, 6);
+  char input[CALLSIGN_LIMIT];
+  int success = Serial.readBytesUntil('\n', input, CALLSIGN_LIMIT);
   if (success == 0) {
     Serial.println("Timed out during time/date setup. Resetting tracking mode...");
     return false;
   }
   Serial.println(input);
+  for (int i = 0; i < CALLSIGN_LIMIT; i++) {
+    qth.callsign[i] = input[i];
+    Serial.print(qth.callsign[i]);
+  }
+
+  save(&qth, &fram);
+  return true;
 }

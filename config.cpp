@@ -40,9 +40,9 @@ void writeString(char *value, uint16_t addr, Adafruit_FRAM_I2C *fram) {
 }
 
 void readString(char *value, uint16_t addr, Adafruit_FRAM_I2C *fram) {
-    value[0] = (char) fram->read8(addr);
-//  for (int i = 0; i < CALLSIGN_LIMIT; i++) {
-//  }
+  for (int i = 0; i < CALLSIGN_LIMIT; i++) {
+    value[i] = (char) fram->read8(addr+i);    
+  }
 }
 
 void writeDouble(double value, uint16_t addr, Adafruit_FRAM_I2C *fram) {
