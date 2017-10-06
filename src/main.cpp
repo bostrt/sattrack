@@ -4,7 +4,7 @@
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_FRAM_I2C.h>
 
-#include <sgp4.h>
+#include <predict/predict.h>
 #include <math.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -27,6 +27,7 @@ Adafruit_FRAM_I2C fram = Adafruit_FRAM_I2C();
 Storage storage = Storage(&fram);
 Adafruit_SSD1306 display(-1);
 QTH qth;
+Console console = Console(&qth, &rtc);
 
 void setup() {
   if (DEBUG) {
@@ -133,7 +134,10 @@ void serialEventRun() {
       Serial.println("Received: " + interrupt);
     }
     if (interrupt.equalsIgnoreCase("break")) {
-      command_mode(&fram, &qth);
+      bool result = console.enterCommandMode();
+      if (result) {
+        storage.save(&qth);
+      }
     }
   }
 }

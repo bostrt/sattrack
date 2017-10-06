@@ -1,10 +1,15 @@
 #include <Adafruit_FRAM_I2C.h>
+#include <RTClib.h>
 #include "console.h"
 #include "main.h"
 
-QTH *qth2;
+Console::Console(QTH *qthref, RTC_PCF8523 *rtcref)
+{
+  qth = qthref;
+  rtc = rtcref;
+}
 
-void swallowIncoming() {
+void Console::swallowIncoming() {
   while (Serial.available()) {
     Serial.read();
   }
@@ -12,8 +17,8 @@ void swallowIncoming() {
 
 // Get 4 digit year.
 // -1 means failure
-int getYear(char *prompt) {
-  Serial.println(prompt);
+int Console::getYear() {
+  Serial.println("Enter Year (YYYY)...");
   Serial.print(">>> ");
   char input[4];
   int success = Serial.readBytes(input, 4);
@@ -26,7 +31,7 @@ int getYear(char *prompt) {
 
 // Get 2 digit part of date.
 // -1 means failure
-int getDateTimePart(char *prompt) {
+int Console::getDateTimePart(char *prompt) {
   Serial.println(prompt);
   Serial.print(">>> ");
   char input[2];
@@ -38,10 +43,9 @@ int getDateTimePart(char *prompt) {
   return atoi(input);
 }
 
-bool configureDateTime() {
-  /*
+bool Console::configureDateTime() {
   Serial.println("Follow the prompts to enter date and time.");
-  int year = getYear("Enter Year (YYYY)...");
+  int year = getYear();
   Serial.println(year);
   if (year < 0) {
     Serial.println("Timed out during time/date setup. Resetting tracking mode...");
@@ -83,14 +87,13 @@ bool configureDateTime() {
   }
   Serial.println(sec);
   DateTime dt = DateTime(year, month, day, hour, min, sec);
-  rtc.adjust(dt);
+  rtc->adjust(dt);
   Serial.println("RTC time updated. " + String(dt.unixtime()));
   return true;
-  */
 }
 
 
-bool configureCallsign() {
+bool Console::configureCallsign() {
   Serial.println("Enter your callsign...");
   Serial.print(">>> ");
   char input[CALLSIGN_LIMIT];
@@ -101,15 +104,14 @@ bool configureCallsign() {
   }
   Serial.println(input);
   for (int i = 0; i < CALLSIGN_LIMIT; i++) {
-    qth2->callsign[i] = input[i];
-    Serial.print(qth2->callsign[i]);
+    qth->callsign[i] = input[i];
+    Serial.print(qth->callsign[i]);
   }
 
-//  save(qth2, fram2);
   return true;
 }
 
-int command_mode(Adafruit_FRAM_I2C *framx, QTH *qthx) {
+bool Console::enterCommandMode() {
   Serial.setTimeout(10000);
   Serial.println("Enter number...");
   Serial.println("0) Set date/time");
@@ -120,9 +122,9 @@ int command_mode(Adafruit_FRAM_I2C *framx, QTH *qthx) {
   char input;
   Serial.readBytes(&input, 1);
   if (input == '0') {
-    configureDateTime();
+    return configureDateTime();
   }  else if(input == '1') {
-    configureCallsign();
+    return configureCallsign();
   } else {
     Serial.println("Unsupported option. Resetting tracking mode...");
   }
