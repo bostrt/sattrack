@@ -66,8 +66,8 @@ void setup() {
   display.clearDisplay();
   display.drawPixel(10, 10, WHITE);
 
-  const char *tle_line_1 = "1 27607U 02058C   17277.94906682 +.00000114 +00000-0 +37005-4 0  9990";
-	const char *tle_line_2 = "2 27607 064.5549 150.1407 0034654 042.8809 317.4986 14.75371499795175";
+  const char *tle_line_1 = "1 27607U 02058C   17279.44029422  .00000122  00000-0  38164-4 0  9991";
+	const char *tle_line_2 = "2 27607  64.5548 145.5835 0034805  42.2572 318.1202 14.75372406795523";
 
 	// Create orbit object
   iss = predict_parse_tle(tle_line_1, tle_line_2);
