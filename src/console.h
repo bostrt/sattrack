@@ -20,6 +20,7 @@ private:
   RTC_PCF8523 *rtc;
   void swallowIncoming();
   int getYear();
+  //int getUTCOffset();  
   int getDateTimePart(char *prompt);
   bool configureDateTime();
   bool configureCallsign();

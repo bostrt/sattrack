@@ -43,6 +43,41 @@ int Console::getDateTimePart(char *prompt) {
   return atoi(input);
 }
 
+// Get UTC Offset in seconds
+/*int Console::getUTCOffset() {
+  Serial.println("Enter UTC Offset (+/-HHMM)");
+  Serial.print(">>> ");
+  char input[5];
+  int success = Serial.readBytes(input, 5);
+  if (success == 0) {
+    return -1;
+  }
+
+  if (!(isdigit(input[1]) || isdigit(input[2]) || isdigit((input[3]) || isdigit(input[4])))) {
+    Serial.println("Invalid character entered.");
+    return -1;
+  }
+
+  bool negative = input[0] == '-';
+  int hour1 = input[1] - '0';
+  int hour2 = input[2] - '0';
+  int minute1 = input[3] - '0';
+  int minute2 = input[4] - '0';
+
+  Serial.println(hour1);
+  Serial.println(hour2);
+  Serial.println(minute1);
+  Serial.println(minute2);
+
+  int hours = (hour1 * 1000) + (hour2 * 100);
+  int minutes = (minute1 * 10) + minute2;
+  int seconds = ((hours * 60 * 60) + (minutes * 60)) * (negative ? -1 : 1);
+  Serial.print("Result is ");
+  Serial.println(seconds);
+  swallowIncoming();
+  return 1;
+}*/
+
 bool Console::configureDateTime() {
   Serial.println("Follow the prompts to enter date and time.");
   int year = getYear();
@@ -86,6 +121,9 @@ bool Console::configureDateTime() {
     return false;
   }
   Serial.println(sec);
+
+  //getUTCOffset();
+
   DateTime dt = DateTime(year, month, day, hour, min, sec);
   rtc->adjust(dt);
   Serial.println("RTC time updated. " + String(dt.unixtime()));

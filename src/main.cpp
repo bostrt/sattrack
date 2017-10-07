@@ -33,7 +33,7 @@ void setup() {
   if (DEBUG) {
     Serial.begin(9600);
     while (!Serial); // TODO: Only wait in DEBUG mode.
-    Serial.print("setup() running lololol...");
+    Serial.print("setup() running...");
     Serial.setTimeout(2000);
   }
   if(!rtc.begin() && DEBUG) {
