@@ -15,17 +15,6 @@
 #define ELEVATION_LOC LONGITUDE_LOC+DOUBLE_LEN
 #define CALLSIGN_LOC ELEVATION_LOC+DOUBLE_LEN
 
-/**
-boolean verify(Adafruit_FRAM_I2C *fram);
-void save(QTH *qth, Adafruit_FRAM_I2C *fram);
-void load(QTH *qth, Adafruit_FRAM_I2C *fram);
-void writeString(char *value, uint16_t addr, Adafruit_FRAM_I2C *fram);
-void readString(char *value, uint16_t addr, Adafruit_FRAM_I2C *fram);
-void writeDouble(double value, uint16_t addr, Adafruit_FRAM_I2C *fram);
-double readDouble(uint16_t addr, Adafruit_FRAM_I2C *fram);
-void reset(Adafruit_FRAM_I2C *fram);
-**/
-
 class Storage {
 public:
   Storage(Adafruit_FRAM_I2C *fram);

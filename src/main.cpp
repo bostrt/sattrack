@@ -1,8 +1,6 @@
 #include <Wire.h>
 #include <RTClib.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
-#include <Adafruit_FRAM_I2C.h>
+#include <SSD1306_minimal.h>
 
 #include <predict/predict.h>
 #include <math.h>
@@ -22,10 +20,10 @@ static predict_observer_t *obs;
 
 #define I2C_ADDRESS 0x78
 
+SSD1306_Mini oled;
 RTC_PCF8523 rtc;
 Adafruit_FRAM_I2C fram = Adafruit_FRAM_I2C();
 Storage storage = Storage(&fram);
-Adafruit_SSD1306 display(-1);
 QTH qth;
 Console console = Console(&qth, &rtc);
 
@@ -36,6 +34,8 @@ void setup() {
     Serial.print("setup() running...");
     Serial.setTimeout(2000);
   }
+  oled.init(I2C_ADDRESS);
+  oled.clear();
   if(!rtc.begin() && DEBUG) {
     Serial.println("Trouble starting up RTC");
   }
@@ -59,13 +59,6 @@ void setup() {
     storage.save(&qth);
   }
 
-
-  display.begin(SSD1306_SWITCHCAPVCC, I2C_ADDRESS, false);
-  display.display();
-  delay(2000);
-  display.clearDisplay();
-  display.drawPixel(10, 10, WHITE);
-
   const char *tle_line_1 = "1 27607U 02058C   17279.44029422  .00000122  00000-0  38164-4 0  9991";
 	const char *tle_line_2 = "2 27607  64.5548 145.5835 0034805  42.2572 318.1202 14.75372406795523";
 
@@ -85,6 +78,7 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   delay(1000);
+  oled.printString("OKAY!");
   if (DEBUG) {
     Serial.print("loop()...\n");
   }
