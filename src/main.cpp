@@ -20,6 +20,12 @@ static predict_observer_t *obs;
 
 #define I2C_ADDRESS 0x78
 
+#ifdef DEBUG
+#define MSG(...) Serial.println(__VA_ARGS__)
+#else
+#define MSG(...)
+#endif
+
 SSD1306_Mini oled;
 RTC_PCF8523 rtc;
 Adafruit_FRAM_I2C fram = Adafruit_FRAM_I2C();
@@ -28,34 +34,41 @@ QTH qth;
 Console console = Console(&qth, &rtc);
 
 void setup() {
-  if (DEBUG) {
-    Serial.begin(9600);
-    while (!Serial); // TODO: Only wait in DEBUG mode.
-    Serial.print("setup() running...");
-    Serial.setTimeout(2000);
-  }
+  Serial.begin(9600);
+
+#if DEBUG
+  while (!Serial); // TODO: Only wait in DEBUG mode.
+  MSG("setup() running...");
+#endif
+
   oled.init(I2C_ADDRESS);
   oled.clear();
-  if(!rtc.begin() && DEBUG) {
-    Serial.println("Trouble starting up RTC");
+  bool success = rtc.begin();
+  if (!success) {
+    MSG("There was an issue configuring RTC. Exiting.");
+    exit(-1);
   }
-  if (!rtc.initialized() && DEBUG) {
-    Serial.println("RTC is NOT running!");
+
+  success = rtc.initialized();
+  if (!success) {
+    MSG("RTC not initialized. Adjusting time to __DATE__, __TIME__.");
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
   }
-  if (fram.begin()) {
-    Serial.println("FRAM I2C Found!");
+
+  success = fram.begin();
+  if (!success) {
+    MSG("There was an issue configuring Storage. Continuing.");
   }
 
   bool valid = storage.verify();
   if (valid) {
-    Serial.println("FRAM Check passed and storage valid. Reading QTH state...");
+    MSG("FRAM Check passed and storage valid. Reading QTH state.");
     storage.load(&qth);
     char buffer[50];
     sprintf(buffer, "Hello %s, [lat: %3.6f, long: %3.6f, elev: %3.6f]", qth.callsign, qth.latitude, qth.longitude, qth.elevation);
-    Serial.println(buffer);
+    MSG(buffer);
   } else {
-    Serial.println("FRAM Check passed and storage invalid. Using default QTH.");
+    MSG("FRAM Check failed and storage invalid. Using default QTH.");
     storage.save(&qth);
   }
 
@@ -64,37 +77,27 @@ void setup() {
 
 	// Create orbit object
   iss = predict_parse_tle(tle_line_1, tle_line_2);
-  if (DEBUG) {
-    Serial.println("predict_parse_tle()...");
-  }
+  MSG("predict_parse_tle()...");
 
 	// Create observer object
 	obs = predict_create_observer(qth.callsign, TO_RADIANS(qth.latitude), TO_RADIANS(qth.longitude), qth.elevation);
-  if (DEBUG) {
-    Serial.println("predict_create_observer()...");
-  }
+  MSG("predict_create_observer()...");
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   delay(1000);
   oled.printString("OKAY!");
-  if (DEBUG) {
-    Serial.print("loop()...\n");
-  }
+  MSG("loop()...\n");
 
   predict_julian_date_t curr_time = predict_to_julian(rtc.now().unixtime());
-  if (DEBUG) {
-    Serial.println("predict_to_julian()...");
-  }
+  MSG("predict_to_julian()...");
 
 
 	// Predict ISS
 	struct predict_orbit iss_orbit;
 	predict_orbit(iss, &iss_orbit, curr_time);
-  if (DEBUG) {
-    Serial.println("predict_orbit()...");
-  }
+  MSG("predict_orbit()...");
 
   char lat[50];
   char lon[50];
@@ -105,7 +108,7 @@ void loop() {
   dtostrf(iss_orbit.altitude, 3, 6, alt);
 
 	sprintf(outbuff, "ISS @ %d: lat=%s, lon=%s, alt=%s\n", rtc.now().unixtime(), lat, lon, alt);
-  Serial.write(outbuff);
+  MSG(outbuff);
 
   struct predict_observation iss_obs;
   predict_observe_orbit(obs, &iss_orbit, &iss_obs);
@@ -124,9 +127,8 @@ void serialEventRun() {
     if (interrupt != NULL) {
       interrupt.trim();
     }
-    if (DEBUG) {
-      Serial.println("Received: " + interrupt);
-    }
+    MSG("Received: " + interrupt);
+
     if (interrupt.equalsIgnoreCase("break")) {
       bool result = console.enterCommandMode();
       if (result) {
