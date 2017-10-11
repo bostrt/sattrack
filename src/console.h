@@ -7,8 +7,6 @@
 #include "storage.h"
 #include "qth.h"
 
-int command_mode(Adafruit_FRAM_I2C *fram, QTH *qth);
-
 class Console
 {
 public:
@@ -20,7 +18,7 @@ private:
   RTC_PCF8523 *rtc;
   void swallowIncoming();
   int getYear();
-  int getUTCOffset();  
+  int getUTCOffset();
   int getDateTimePart(char *prompt);
   bool configureDateTime();
   bool configureCallsign();

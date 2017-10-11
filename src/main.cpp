@@ -130,6 +130,7 @@ void serialEventRun() {
     MSG("Received: " + interrupt);
 
     if (interrupt.equalsIgnoreCase("break")) {
+      MSG("Entering command mode.");
       bool result = console.enterCommandMode();
       if (result) {
         storage.save(&qth);

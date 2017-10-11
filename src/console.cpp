@@ -167,11 +167,12 @@ bool Console::enterCommandMode() {
   char input;
   Serial.readBytes(&input, 1);
   if (input == '0') {
+    Serial.setTimeout(1000);    
     return configureDateTime();
   }  else if(input == '1') {
+    Serial.setTimeout(1000);
     return configureCallsign();
   } else {
     Serial.println("Unsupported option. Resetting tracking mode...");
   }
-  Serial.setTimeout(1000);
 }
