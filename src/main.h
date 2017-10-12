@@ -11,6 +11,9 @@
 #define TO_RADIANS(degrees) (degrees * (M_PI / 180.0))
 #define TO_DEGREES(radians) (radians * (180.0 / M_PI))
 
+typedef struct predict_orbit orbit;
+typedef struct predict_observation observation;
+
 #define DEBUG 1
 
 #endif

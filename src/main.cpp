@@ -13,10 +13,11 @@
 #include "main.h"
 #include "storage.h"
 #include "console.h"
+#include "display.h"
 
 
 static predict_orbital_elements_t *iss;
-static predict_observer_t *obs;
+static predict_observer_t *observer;
 
 #define I2C_ADDRESS 0x78
 
@@ -32,6 +33,7 @@ Adafruit_FRAM_I2C fram = Adafruit_FRAM_I2C();
 Storage storage = Storage(&fram);
 QTH qth;
 Console console = Console(&qth, &rtc);
+Display display = Display(&oled);
 
 void setup() {
   Serial.begin(9600);
@@ -80,45 +82,27 @@ void setup() {
   MSG("predict_parse_tle()...");
 
 	// Create observer object
-	obs = predict_create_observer(qth.callsign, TO_RADIANS(qth.latitude), TO_RADIANS(qth.longitude), qth.elevation);
+	observer = predict_create_observer(qth.callsign, TO_RADIANS(qth.latitude), TO_RADIANS(qth.longitude), qth.elevation);
   MSG("predict_create_observer()...");
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   delay(1000);
-  oled.printString("OKAY!");
   MSG("loop()...\n");
+  int now = rtc.now().unixtime();
+  predict_julian_date_t curr_time = predict_to_julian(now);
 
-  predict_julian_date_t curr_time = predict_to_julian(rtc.now().unixtime());
-  MSG("predict_to_julian()...");
-
-
-	// Predict ISS
-	struct predict_orbit iss_orbit;
-	predict_orbit(iss, &iss_orbit, curr_time);
+	// Predict
+	orbit o;
+  observation obs;
+	predict_orbit(iss, &o, curr_time);
   MSG("predict_orbit()...");
+  predict_observe_orbit(observer, &o, &obs);
 
-  char lat[50];
-  char lon[50];
-  char alt[50];
-  char outbuff[50];
-  dtostrf(TO_DEGREES(iss_orbit.latitude), 3, 6, lat);
-  dtostrf(TO_DEGREES(iss_orbit.longitude), 3, 6, lon);
-  dtostrf(iss_orbit.altitude, 3, 6, alt);
-
-	sprintf(outbuff, "ISS @ %d: lat=%s, lon=%s, alt=%s\n", rtc.now().unixtime(), lat, lon, alt);
-  MSG(outbuff);
-
-  struct predict_observation iss_obs;
-  predict_observe_orbit(obs, &iss_orbit, &iss_obs);
-  char azi[50];
-  char ele[50];
-  dtostrf(TO_DEGREES(iss_obs.azimuth), 3, 6, azi);
-  dtostrf(TO_DEGREES(iss_obs.elevation), 3, 6, ele);
-  sprintf(outbuff, "ISS: azi=%s, ele=%s\n", azi, ele);
-  Serial.write(outbuff);
-
+  display.setTime(now);
+  display.setOrbit(&o);
+  display.setObserervation(&obs);
 }
 
 void serialEventRun() {
