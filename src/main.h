@@ -14,6 +14,6 @@
 typedef struct predict_orbit orbit;
 typedef struct predict_observation observation;
 
-#define DEBUG 1
+#define DEBUG 0
 
 #endif

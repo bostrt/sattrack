@@ -12,7 +12,7 @@ class Display
 public:
   Display(SSD1306_Mini *oled);
   void setQTH(QTH *qth);
-  void setTime(unsigned int time);
+  void setTime(unsigned int hour, unsigned int minute, unsigned int seconds);
   void setOrbit(orbit *orbit);
   void setObserervation(predict_observation *observation);
 private:

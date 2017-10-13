@@ -74,6 +74,8 @@ void setup() {
     storage.save(&qth);
   }
 
+  display.setQTH(&qth);
+
   const char *tle_line_1 = "1 27607U 02058C   17279.44029422  .00000122  00000-0  38164-4 0  9991";
 	const char *tle_line_2 = "2 27607  64.5548 145.5835 0034805  42.2572 318.1202 14.75372406795523";
 
@@ -90,8 +92,8 @@ void loop() {
   // put your main code here, to run repeatedly:
   delay(1000);
   MSG("loop()...\n");
-  int now = rtc.now().unixtime();
-  predict_julian_date_t curr_time = predict_to_julian(now);
+  DateTime now = rtc.now();
+  predict_julian_date_t curr_time = predict_to_julian(now.unixtime());
 
 	// Predict
 	orbit o;
@@ -100,7 +102,11 @@ void loop() {
   MSG("predict_orbit()...");
   predict_observe_orbit(observer, &o, &obs);
 
-  display.setTime(now);
+  Serial.println(now.hour());
+  Serial.println(now.minute());
+  Serial.println(now.second());
+  Serial.println(now.unixtime());
+  display.setTime(now.hour(), now.minute(), now.second());
   display.setOrbit(&o);
   display.setObserervation(&obs);
 }
