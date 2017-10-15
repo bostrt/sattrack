@@ -124,6 +124,7 @@ void serialEventRun() {
       bool result = console.enterCommandMode();
       if (result) {
         storage.save(&qth);
+        display.setQTH(&qth);
       }
     }
   }
