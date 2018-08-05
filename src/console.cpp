@@ -160,8 +160,8 @@ bool Console::enterCommandMode() {
   Serial.setTimeout(10000);
   Serial.println("Enter number...");
   Serial.println("0) Set date/time");
-  Serial.println("1) Set callsign    (Coming soon!)");
-  Serial.println("2) Add satellite   (Coming soon!)");
+  Serial.println("1) Set callsign");
+  Serial.println("2) Update satellite TLE");
   Serial.println("3) Set QTH locator (Coming soon!)");
   Serial.print(">>> ");
   char input;

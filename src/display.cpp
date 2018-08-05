@@ -1,7 +1,7 @@
 #include <predict/predict.h>
+#include <avr/dtostrf.h>
 #include "display.h"
 #include "main.h"
-#include <avr/dtostrf.h>
 
 // Data coordinates
 #define TIME_COL 0
@@ -17,17 +17,17 @@
 #define ELE_COL 4
 #define ELE_ROW 0
 
-Display::Display(SSD1306_Mini *oledref)
+Display::Display(Adafruit_SSD1306 *oledref)
 {
   oled = oledref;
 }
 
 void Display::setQTH(QTH *qth)
 {
-  oled->cursorTo(QTH_ROW, QTH_COL);
+  oled->setCursor(0, 0);
   char buff[8];
   sprintf(buff, "\xb0%s\xb0", qth);
-  oled->printString(buff);
+  oled->println(buff);
 }
 
 // TODO: Fix TZ of hour.
@@ -36,8 +36,8 @@ void Display::setTime(unsigned int hour, unsigned int minute, unsigned int secon
 {
   char buff[10];
   sprintf(buff, "%02d:%02d:%02d", hour, minute, seconds);
-  oled->cursorTo(TIME_ROW,  TIME_COL);
-  oled->printString(buff);
+  oled->setCursor(64, 0);
+  oled->print(buff);
 }
 
 void Display::setOrbit(orbit *o)
@@ -51,27 +51,43 @@ void Display::setOrbit(orbit *o)
   dtostrf(o->altitude, 3, 2, alt);
 
 	sprintf(buff, "LAT: %s", lat);
-  oled->cursorTo(LAT_ROW, LAT_COL);
-  oled->printString(buff);
-
+//  oled->cursorTo(LAT_ROW, LAT_COL);
+//  oled->printString(buff);
+  Serial.println(buff);
   sprintf(buff, "LON: %s", lon);
-  oled->cursorTo(LON_ROW, LON_COL);
-  oled->printString(buff);
+  Serial.println(buff);  
+//  oled->cursorTo(LON_ROW, LON_COL);
+//  oled->printString(buff);
 }
 
 void Display::setObserervation(predict_observation *obs)
 {
   char azi[10];
+  char polarx[10];
+  char polary[10];
   char ele[10];
   char buff[17];
   dtostrf(TO_DEGREES(obs->azimuth), 3, 6, azi);
   dtostrf(TO_DEGREES(obs->elevation), 3, 6, ele);
 
   sprintf(buff, "AZI: %s", azi);
-  oled->cursorTo(AZI_ROW, AZI_COL);
-  oled->printString(buff);
+//  oled->cursorTo(AZI_ROW, AZI_COL);
+//  oled->printString(buff);
+  Serial.println(buff);
+  
+  double degrees = (-(int)TO_DEGREES(obs->azimuth) + 90) % 360;
+  double x = cos(TO_RADIANS(degrees)) * 30 + oled->width()/2 + 10;
+  double y = abs(sin(TO_RADIANS(degrees)) * 30) + oled->height()/2 + 10;
+  dtostrf(x, 3, 6, polarx);
+  dtostrf(y, 3, 6, polary);  
+  sprintf(buff, "X: %s, Y: %s", polarx, polary);
+  Serial.println(buff);
 
-  sprintf(buff, "ELE: %s", ele);
-  oled->cursorTo(ELE_ROW, ELE_COL);
-  oled->printString(buff);
+  int elevationPixels = TO_DEGREES(obs->elevation) / (90 / 30); // radius = 30
+  sprintf(buff, "ELE: %d", elevationPixels);
+//  oled->cursorTo(ELE_ROW, ELE_COL);
+//  oled->printString(buff);
+  Serial.println(buff);
+  
+  oled->drawPixel(x, y, WHITE);  
 }

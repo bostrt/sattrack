@@ -1,7 +1,7 @@
 #ifndef _DISPLAY_H
 #define _DISPLAY_H
 
-#include <SSD1306_minimal.h>
+#include <Adafruit_SSD1306.h>
 #include <Button.h>
 #include <predict/predict.h>
 #include "qth.h"
@@ -10,14 +10,13 @@
 class Display
 {
 public:
-  Display(SSD1306_Mini *oled);
+  Display(Adafruit_SSD1306 *oled);
   void setQTH(QTH *qth);
   void setTime(unsigned int hour, unsigned int minute, unsigned int seconds);
   void setOrbit(orbit *orbit);
   void setObserervation(predict_observation *observation);
 private:
-  SSD1306_Mini *oled;
+  Adafruit_SSD1306 *oled;
 };
-
 
 #endif

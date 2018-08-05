@@ -1,6 +1,6 @@
 #include <Wire.h>
 #include <RTClib.h>
-#include <SSD1306_minimal.h>
+#include <Adafruit_SSD1306.h>
 
 #include <predict/predict.h>
 #include <math.h>
@@ -15,11 +15,10 @@
 #include "console.h"
 #include "display.h"
 
-
 static predict_orbital_elements_t *iss;
 static predict_observer_t *observer;
 
-#define I2C_ADDRESS 0x78
+#define I2C_ADDRESS 0x3C
 
 #ifdef DEBUG
 #define MSG(...) Serial.println(__VA_ARGS__)
@@ -27,7 +26,7 @@ static predict_observer_t *observer;
 #define MSG(...)
 #endif
 
-SSD1306_Mini oled;
+Adafruit_SSD1306 oled = Adafruit_SSD1306();
 RTC_PCF8523 rtc;
 Adafruit_FRAM_I2C fram = Adafruit_FRAM_I2C();
 Storage storage = Storage(&fram);
@@ -43,8 +42,11 @@ void setup() {
   MSG("setup() running...");
 #endif
 
-  oled.init(I2C_ADDRESS);
-  oled.clear();
+  oled.begin(SSD1306_SWITCHCAPVCC, I2C_ADDRESS);
+  oled.display();
+  delay(1000);
+  oled.clearDisplay();
+  
   bool success = rtc.begin();
   if (!success) {
     MSG("There was an issue configuring RTC. Exiting.");
@@ -75,9 +77,23 @@ void setup() {
   }
 
   display.setQTH(&qth);
+    oled.drawCircle(oled.width()/2, oled.height()/2, 30, WHITE);
+    oled.drawCircle(oled.width()/2, oled.height()/2, 20, WHITE);
+    oled.drawCircle(oled.width()/2, oled.height()/2, 9, WHITE);
+    oled.drawFastHLine(oled.width()/2, oled.height()/2, 30, WHITE);
+    oled.drawFastHLine(oled.width()/2-30, oled.height()/2, 30, WHITE);
+    oled.drawFastVLine(oled.width()/2, oled.height()/2, 30, WHITE);
+    oled.drawFastVLine(oled.width()/2, oled.height()/2-30, 30, WHITE);
+    oled.setTextSize(1);
+    oled.setTextColor(WHITE);    
+    oled.setCursor(0, 0);
+    oled.println("Test test");
+    oled.display();
+    delay(10);
+//    oled.clearDisplay();
 
-  const char *tle_line_1 = "1 27607U 02058C   17279.44029422  .00000122  00000-0  38164-4 0  9991";
-	const char *tle_line_2 = "2 27607  64.5548 145.5835 0034805  42.2572 318.1202 14.75372406795523";
+  const char *tle_line_1 = "1 22825U 93061C   17306.87224525 +.00000010 +00000-0 +21491-4 0  9992";
+	const char *tle_line_2 = "2 22825 098.8314 274.2839 0007425 289.9051 070.1330 14.30011892256951";
 
 	// Create orbit object
   iss = predict_parse_tle(tle_line_1, tle_line_2);
@@ -106,9 +122,11 @@ void loop() {
   Serial.println(now.minute());
   Serial.println(now.second());
   Serial.println(now.unixtime());
+  
   display.setTime(now.hour(), now.minute(), now.second());
   display.setOrbit(&o);
   display.setObserervation(&obs);
+  oled.display();
 }
 
 void serialEventRun() {
